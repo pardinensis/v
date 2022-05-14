@@ -1,0 +1,14 @@
+application:
+  name: "Vulkan"
+  version:
+    major: 0
+    minor: 1
+    patch: 0
+
+window:
+  width: 1024
+  height: 768
+  fullscreen_desktop: false
+
+engine:
+  validation_layers_enabled: false
