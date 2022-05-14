@@ -23,7 +23,7 @@ public:
         m_cleanupStack.push(SDL_Quit);
 
         // create window
-        unsigned flags = SDL_WINDOW_VULKAN;
+        uint32_t flags = SDL_WINDOW_VULKAN;
         if (Config::get<bool>("window.fullscreen", false)) flags |= SDL_WINDOW_FULLSCREEN;
         if (Config::get<bool>("window.fullscreen_desktop", false)) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
         m_window = SDL_CreateWindow(

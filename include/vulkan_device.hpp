@@ -19,10 +19,13 @@ public:
 private:
     void createVulkanInstance(SDL_Window* window);
     void pickPhysicalDevice();
-    unsigned getGraphicsQueueFamily();
     void createDevice();
+    void createCommandPool();
 
     VkInstance m_instance = nullptr;
     VkPhysicalDevice m_physicalDevice = nullptr;
     VkDevice m_device = nullptr;
+    VkCommandPool m_commandPool = nullptr;
+
+    std::optional<uint32_t> m_graphicsQueueFamily = {};
 };
