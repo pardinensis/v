@@ -8,12 +8,17 @@
 VulkanDevice::VulkanDevice(SDL_Window* window) {
     createVulkanInstance(window);
     pickPhysicalDevice();
+    createDevice();
 }
 
 VulkanDevice::~VulkanDevice() {
     vkDestroyInstance(m_instance, nullptr);
 }
 
+
+VkDevice VulkanDevice::getVkDevice() const {
+    return m_device;
+}
 
 void VulkanDevice::createVulkanInstance(SDL_Window* window) {
     // get extensions
@@ -76,15 +81,15 @@ void VulkanDevice::pickPhysicalDevice() {
     }
 
     // choose the most suitable physical device by assigning a score to each one
-    std::vector<int> physicalDeviceScores;
+    int bestScore = 0;
+    std::optional<VkPhysicalDevice> bestPhysicalDevice = {};
     for (const auto& device : physicalDevices) {
-        int score = 0;
-
         VkPhysicalDeviceProperties physicalDeviceProperties;
         vkGetPhysicalDeviceProperties(device, &physicalDeviceProperties);
 
         // rate deviceType
         // these scores are quite arbitrary as of now
+        int score = 0;
         switch (physicalDeviceProperties.deviceType) {
             case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
                 score += 2000;
@@ -95,8 +100,62 @@ void VulkanDevice::pickPhysicalDevice() {
             default:
                 break;
         }
+
+        if (score > bestScore) {
+            bestScore = score;
+            bestPhysicalDevice = device;
+        }
     }
-    const auto bestScore = std::max_element(physicalDeviceScores.begin(), physicalDeviceScores.end());
-    m_physicalDevice = physicalDevices[std::distance(physicalDeviceScores.begin(), bestScore)];
+
+    if (!bestPhysicalDevice.has_value()) {
+        throw std::runtime_error("failed to find a suitable physical device");
+    }
+
+    m_physicalDevice = bestPhysicalDevice.value();
 }
 
+unsigned VulkanDevice::getGraphicsQueueFamily() {
+    // get all queue families
+    unsigned int queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, 0);
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, queueFamilies.data());
+
+    // look for the one with the GRAPHICS_BIT set
+    for (unsigned i = 0; i < queueFamilies.size(); ++i) {
+        if (queueFamilies[i].queueCount > 0 && (queueFamilies[i].queueFlags | VK_QUEUE_GRAPHICS_BIT)) {
+            return i;
+        }
+    }
+    throw std::runtime_error("unable to find a graphics queue family");
+}
+
+void VulkanDevice::createDevice() {
+    // create the device queue info
+    std::vector<float> queuePriorities = { 0.f };
+    VkDeviceQueueCreateInfo deviceQueueCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .queueFamilyIndex = getGraphicsQueueFamily(),
+        .queueCount = 1,
+        .pQueuePriorities = queuePriorities.data(),
+    };
+
+    // create the device itself
+    VkDeviceCreateInfo deviceCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .queueCreateInfoCount = 1,
+        .pQueueCreateInfos = &deviceQueueCreateInfo,
+        .enabledLayerCount = 0,
+        .ppEnabledLayerNames = nullptr,
+        .enabledExtensionCount = 0,
+        .ppEnabledExtensionNames = nullptr,
+        .pEnabledFeatures = nullptr,
+    };
+    if (vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create device");
+    }
+}

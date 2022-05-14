@@ -14,10 +14,15 @@ public:
     VulkanDevice& operator=(const VulkanDevice&) = delete;
     VulkanDevice& operator=(VulkanDevice&&) = delete;
 
+    VkDevice getVkDevice() const;
+
 private:
     void createVulkanInstance(SDL_Window* window);
     void pickPhysicalDevice();
+    unsigned getGraphicsQueueFamily();
+    void createDevice();
 
     VkInstance m_instance = nullptr;
     VkPhysicalDevice m_physicalDevice = nullptr;
+    VkDevice m_device = nullptr;
 };
