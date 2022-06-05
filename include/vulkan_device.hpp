@@ -22,10 +22,10 @@ private:
     void createDevice();
     void createCommandPool();
 
-    VkInstance m_instance = nullptr;
-    VkPhysicalDevice m_physicalDevice = nullptr;
-    VkDevice m_device = nullptr;
-    VkCommandPool m_commandPool = nullptr;
+    VkInstance m_vkInstance = nullptr;
+    VkPhysicalDevice m_vkPhysicalDevice = nullptr;
+    VkDevice m_vkDevice = nullptr;
+    VkCommandPool m_vkCommandPool = nullptr;
 
     std::optional<uint32_t> m_graphicsQueueFamily = {};
 };

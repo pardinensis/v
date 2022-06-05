@@ -13,17 +13,17 @@ VulkanDevice::VulkanDevice(SDL_Window* window) {
 }
 
 VulkanDevice::~VulkanDevice() {
-    if (m_device != nullptr) {
-        vkDestroyDevice(m_device, nullptr);
+    if (m_vkDevice != nullptr) {
+        vkDestroyDevice(m_vkDevice, nullptr);
     }
-    if (m_instance != nullptr) {
-        vkDestroyInstance(m_instance, nullptr);
+    if (m_vkInstance != nullptr) {
+        vkDestroyInstance(m_vkInstance, nullptr);
     }
 }
 
 
 VkDevice VulkanDevice::getVkDevice() const {
-    return m_device;
+    return m_vkDevice;
 }
 
 void VulkanDevice::createVulkanInstance(SDL_Window* window) {
@@ -70,21 +70,21 @@ void VulkanDevice::createVulkanInstance(SDL_Window* window) {
     };
 
     // create the vulkan instance
-    if (vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance) != VK_SUCCESS) {
+    if (vkCreateInstance(&instanceCreateInfo, nullptr, &m_vkInstance) != VK_SUCCESS) {
         throw std::runtime_error("failed to create vulkan instance");
     }
 }
 
 void VulkanDevice::pickPhysicalDevice() {
-    assert(m_instance != nullptr);
+    assert(m_vkInstance != nullptr);
 
     // get all available physical devices
     uint32_t nPhysicalDevices = 0;
-    if (vkEnumeratePhysicalDevices(m_instance, &nPhysicalDevices, nullptr) != VK_SUCCESS) {
+    if (vkEnumeratePhysicalDevices(m_vkInstance, &nPhysicalDevices, nullptr) != VK_SUCCESS) {
         throw std::runtime_error("failed to enumerate phyiscal devices");
     }
     std::vector<VkPhysicalDevice> physicalDevices(nPhysicalDevices);
-    if (vkEnumeratePhysicalDevices(m_instance, &nPhysicalDevices, physicalDevices.data()) != VK_SUCCESS) {
+    if (vkEnumeratePhysicalDevices(m_vkInstance, &nPhysicalDevices, physicalDevices.data()) != VK_SUCCESS) {
         throw std::runtime_error("failed to retrieve the list of physical devices");
     }
 
@@ -119,18 +119,18 @@ void VulkanDevice::pickPhysicalDevice() {
         throw std::runtime_error("failed to find a suitable physical device");
     }
 
-    m_physicalDevice = bestPhysicalDevice.value();
+    m_vkPhysicalDevice = bestPhysicalDevice.value();
 }
 
 
 void VulkanDevice::createDevice() {
-    assert(m_physicalDevice != nullptr);
+    assert(m_vkPhysicalDevice != nullptr);
 
     // get all queue families
     uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, 0);
+    vkGetPhysicalDeviceQueueFamilyProperties(m_vkPhysicalDevice, &queueFamilyCount, 0);
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, queueFamilies.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(m_vkPhysicalDevice, &queueFamilyCount, queueFamilies.data());
 
     // look for the one with the GRAPHICS_BIT set
     for (size_t i = 0; i < queueFamilies.size(); ++i) {
@@ -167,13 +167,13 @@ void VulkanDevice::createDevice() {
         .ppEnabledExtensionNames = nullptr,
         .pEnabledFeatures = nullptr,
     };
-    if (vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device) != VK_SUCCESS) {
+    if (vkCreateDevice(m_vkPhysicalDevice, &deviceCreateInfo, nullptr, &m_vkDevice) != VK_SUCCESS) {
         throw std::runtime_error("failed to create device");
     }
 }
 
 void VulkanDevice::createCommandPool() {
-    assert(m_device != nullptr);
+    assert(m_vkDevice != nullptr);
     assert(m_graphicsQueueFamily.has_value());
 
     VkCommandPoolCreateInfo commandPoolCreateInfo = {
@@ -182,7 +182,7 @@ void VulkanDevice::createCommandPool() {
         .flags = 0,
         .queueFamilyIndex = m_graphicsQueueFamily.value(),
     };
-    if (vkCreateCommandPool(m_device, &commandPoolCreateInfo, nullptr, &m_commandPool) != VK_SUCCESS) {
+    if (vkCreateCommandPool(m_vkDevice, &commandPoolCreateInfo, nullptr, &m_vkCommandPool) != VK_SUCCESS) {
         throw std::runtime_error("failed to create command pool");
     }
 }
