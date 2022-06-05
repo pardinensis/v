@@ -15,3 +15,5 @@
 // stdlib includes
 #include <functional>
 #include <iostream>
+#include <memory>
+#include <optional>

@@ -3,6 +3,7 @@
 #include "common_includes.hpp"
 #include "config.hpp"
 #include "vulkan_device.hpp"
+#include "vulkan_swapchain.hpp"
 
 #include <SDL2/SDL.h>
 
@@ -14,7 +15,8 @@ struct App::Impl {
 private:
     SDL_Window* m_window;
     std::stack<std::function<void()>> m_cleanupStack;
-    std::unique_ptr<VulkanDevice> m_device;
+    std::shared_ptr<VulkanDevice> m_device;
+    std::shared_ptr<VulkanSwapchain> m_swapchain;
 
 public:
     Impl() {
@@ -40,8 +42,12 @@ public:
         m_cleanupStack.push(std::bind(SDL_DestroyWindow, m_window));
 
         // create the vulkan device
-        m_device = std::make_unique<VulkanDevice>(m_window);
+        m_device = std::make_shared<VulkanDevice>(m_window);
         m_cleanupStack.push([this](){ m_device.reset(); });
+
+        // create the vulkan swapchain
+        m_swapchain = std::make_shared<VulkanSwapchain>(m_device);
+        m_cleanupStack.push([this](){ m_swapchain.reset(); });
     }
 
     ~Impl() {

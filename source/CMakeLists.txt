@@ -8,6 +8,7 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
     config.cpp
     main.cpp
     vulkan_device.cpp
+    vulkan_swapchain.cpp
 )
 
 target_include_directories(${EXECUTABLE_NAME} PRIVATE
